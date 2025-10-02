@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Log System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 shadow-2xl">
+            <h1 class="text-3xl font-bold">Daily Log System</h1>
+            <p class="text-gray-300">Spåra dina dagliga aktiviteter</p>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white/10 backdrop-blur-lg rounded-2xl p-6">
+                <h2 class="text-2xl font-bold mb-4">Ny Aktivitet</h2>
+                <div class="space-y-4">
+                    <input type="date" id="entryDate" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
+                    <input type="time" id="entryTime" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
+                    <input type="text" id="entryDescription" placeholder="Beskrivning" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
+                    <button onclick="addEntry()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-lg font-semibold">Lägg till</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = '/api';
+        document.getElementById('entryDate').valueAsDate = new Date();
+        
+        async function addEntry() {
+            const date = document.getElementById('entryDate').value;
+            const time = document.getElementById('entryTime').value;
+            const description = document.getElementById('entryDescription').value;
+            
+            if (!date || !time || !description) {
+                alert('Alla fält måste fyllas i');
+                return;
+            }
+            
+            try {
+                await fetch(`${API_URL}/entries`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entry_date: date, start_time: time, description })
+                });
+                alert('Aktivitet tillagd!');
+                document.getElementById('entryTime').value = '';
+                document.getElementById('entryDescription').value = '';
+            } catch (error) {
+                alert('Ett fel uppstod');
+            }
+        }
+    </script>
+</body>
+</html>

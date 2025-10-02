@@ -1,0 +1,16 @@
+{
+  "dashboard": {
+    "title": "Daily Log - Översikt",
+    "tags": ["daily-log"],
+    "panels": [
+      {
+        "id": 1,
+        "title": "Arbetade Timmar per Dag",
+        "type": "graph",
+        "targets": [{
+          "rawSql": "SELECT time, work_hours FROM vw_daily_hours WHERE time >= NOW() - INTERVAL '30 days'"
+        }]
+      }
+    ]
+  }
+}
