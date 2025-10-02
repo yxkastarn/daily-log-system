@@ -1,0 +1,196 @@
+-- Daily Log System - Seed Data
+-- Fyller databasen med exempeldata för demonstration
+
+-- Rensa befintlig data (behåll defaultanvändaren)
+DELETE FROM log_entries WHERE user_id = 1;
+DELETE FROM projects;
+DELETE FROM daily_summaries WHERE user_id = 1;
+
+-- Lägg till projekt
+INSERT INTO projects (name, description) VALUES
+('Webbplats redesign', 'Omdesign av företagets hemsida'),
+('Kundportal', 'Utveckling av ny kundportal'),
+('Intern dokumentation', 'Uppdatera interna dokument och processer'),
+('Möten & Planering', 'Team-möten och planering'),
+('Support & Bugfixar', 'Kundsupp och buggrättningar');
+
+-- Vecka 1 (Måndag-Fredag)
+-- Måndag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '20 days', '08:00', '08:30', 'Mejlkoll och dagplanering', 4),
+(1, CURRENT_DATE - INTERVAL '20 days', '08:30', '10:00', 'Designskisser för startsida', 1),
+(1, CURRENT_DATE - INTERVAL '20 days', '10:00', '10:15', 'Kafferast', NULL),
+(1, CURRENT_DATE - INTERVAL '20 days', '10:15', '12:00', 'Kodning - Responsiv header', 1),
+(1, CURRENT_DATE - INTERVAL '20 days', '13:00', '14:30', 'Code review med teamet', 4),
+(1, CURRENT_DATE - INTERVAL '20 days', '14:30', '16:00', 'Bugfix - Login-problem', 5),
+(1, CURRENT_DATE - INTERVAL '20 days', '16:00', '17:00', 'Dokumentera API-endpoints', 3);
+
+-- Tisdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '19 days', '07:45', '08:15', 'Morgonmöte med teamet', 4),
+(1, CURRENT_DATE - INTERVAL '19 days', '08:15', '10:30', 'Implementera användarautentisering', 2),
+(1, CURRENT_DATE - INTERVAL '19 days', '10:30', '10:45', 'Fika', NULL),
+(1, CURRENT_DATE - INTERVAL '19 days', '10:45', '12:00', 'Database schema design', 2),
+(1, CURRENT_DATE - INTERVAL '19 days', '13:00', '14:00', 'Kundmöte - Kravspec', 2),
+(1, CURRENT_DATE - INTERVAL '19 days', '14:00', '16:30', 'Backend API utveckling', 2),
+(1, CURRENT_DATE - INTERVAL '19 days', '16:30', '17:00', 'Testning och dokumentation', 2);
+
+-- Onsdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '18 days', '08:00', '09:00', 'Sprint planning', 4),
+(1, CURRENT_DATE - INTERVAL '18 days', '09:00', '11:00', 'Frontend komponenter - Dashboard', 2),
+(1, CURRENT_DATE - INTERVAL '18 days', '11:00', '11:15', 'Kort paus', NULL),
+(1, CURRENT_DATE - INTERVAL '18 days', '11:15', '12:00', 'CSS styling och layout', 1),
+(1, CURRENT_DATE - INTERVAL '18 days', '13:00', '15:00', 'Integrering med backend', 2),
+(1, CURRENT_DATE - INTERVAL '18 days', '15:00', '16:00', 'Felsökning - CORS-problem', 5),
+(1, CURRENT_DATE - INTERVAL '18 days', '16:00', '17:00', 'Git merge och pull request', 2);
+
+-- Torsdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '17 days', '08:00', '08:45', 'Mejl och uppföljning', 4),
+(1, CURRENT_DATE - INTERVAL '17 days', '08:45', '10:30', 'Optimera SQL-queries', 2),
+(1, CURRENT_DATE - INTERVAL '17 days', '10:30', '10:45', 'Promenad', NULL),
+(1, CURRENT_DATE - INTERVAL '17 days', '10:45', '12:00', 'Implementera sökfunktion', 2),
+(1, CURRENT_DATE - INTERVAL '17 days', '13:00', '14:30', 'Användartest och feedback', 2),
+(1, CURRENT_DATE - INTERVAL '17 days', '14:30', '16:00', 'Responsive design mobil', 1),
+(1, CURRENT_DATE - INTERVAL '17 days', '16:00', '17:00', 'Uppdatera dokumentation', 3);
+
+-- Fredag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '16 days', '08:00', '09:30', 'Veckouppföljning och retrospektiv', 4),
+(1, CURRENT_DATE - INTERVAL '16 days', '09:30', '11:00', 'Bugfixar från testning', 5),
+(1, CURRENT_DATE - INTERVAL '16 days', '11:00', '11:15', 'Kafferast', NULL),
+(1, CURRENT_DATE - INTERVAL '16 days', '11:15', '12:00', 'Performance testing', 2),
+(1, CURRENT_DATE - INTERVAL '16 days', '13:00', '14:00', 'Deploy till testmiljö', 2),
+(1, CURRENT_DATE - INTERVAL '16 days', '14:00', '15:30', 'Teknisk dokumentation', 3),
+(1, CURRENT_DATE - INTERVAL '16 days', '15:30', '16:00', 'Planering nästa vecka', 4);
+
+-- Vecka 2 (Måndag-Fredag)
+-- Måndag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '13 days', '08:00', '08:30', 'Veckostart och prioritering', 4),
+(1, CURRENT_DATE - INTERVAL '13 days', '08:30', '10:30', 'Ny feature - Notifikationer', 2),
+(1, CURRENT_DATE - INTERVAL '13 days', '10:30', '10:45', 'Fika', NULL),
+(1, CURRENT_DATE - INTERVAL '13 days', '10:45', '12:00', 'Email-integration', 2),
+(1, CURRENT_DATE - INTERVAL '13 days', '13:00', '15:00', 'Säkerhetsgenomgång', 2),
+(1, CURRENT_DATE - INTERVAL '13 days', '15:00', '16:30', 'Refaktorering av gammal kod', 2),
+(1, CURRENT_DATE - INTERVAL '13 days', '16:30', '17:00', 'Kodgranskning', 4);
+
+-- Tisdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '12 days', '07:45', '08:15', 'Daily standup', 4),
+(1, CURRENT_DATE - INTERVAL '12 days', '08:15', '10:00', 'Implementera export-funktion', 2),
+(1, CURRENT_DATE - INTERVAL '12 days', '10:00', '10:15', 'Kort paus', NULL),
+(1, CURRENT_DATE - INTERVAL '12 days', '10:15', '12:00', 'PDF-generering', 2),
+(1, CURRENT_DATE - INTERVAL '12 days', '13:00', '14:30', 'Möte med produktägare', 4),
+(1, CURRENT_DATE - INTERVAL '12 days', '14:30', '16:00', 'UX-förbättringar', 1),
+(1, CURRENT_DATE - INTERVAL '12 days', '16:00', '17:00', 'Unit tests', 2);
+
+-- Onsdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '11 days', '08:00', '09:30', 'Grafana dashboards', 2),
+(1, CURRENT_DATE - INTERVAL '11 days', '09:30', '11:30', 'API-dokumentation', 3),
+(1, CURRENT_DATE - INTERVAL '11 days', '11:30', '11:45', 'Fikarast', NULL),
+(1, CURRENT_DATE - INTERVAL '11 days', '11:45', '12:00', 'Mejlhantering', 4),
+(1, CURRENT_DATE - INTERVAL '11 days', '13:00', '15:00', 'Frontend optimering', 1),
+(1, CURRENT_DATE - INTERVAL '11 days', '15:00', '16:00', 'Buggfixar', 5),
+(1, CURRENT_DATE - INTERVAL '11 days', '16:00', '17:00', 'CI/CD pipeline setup', 2);
+
+-- Torsdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '10 days', '08:00', '09:00', 'Teknisk design review', 4),
+(1, CURRENT_DATE - INTERVAL '10 days', '09:00', '11:00', 'Database migrationer', 2),
+(1, CURRENT_DATE - INTERVAL '10 days', '11:00', '11:15', 'Promenad', NULL),
+(1, CURRENT_DATE - INTERVAL '10 days', '11:15', '12:00', 'Backup-rutiner', 2),
+(1, CURRENT_DATE - INTERVAL '10 days', '13:00', '14:00', 'Kundsupp - Akuta ärenden', 5),
+(1, CURRENT_DATE - INTERVAL '10 days', '14:00', '16:00', 'Feature utveckling', 2),
+(1, CURRENT_DATE - INTERVAL '10 days', '16:00', '17:00', 'Deploy förbereding', 2);
+
+-- Fredag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '9 days', '08:00', '09:00', 'Veckoavslut och demo', 4),
+(1, CURRENT_DATE - INTERVAL '9 days', '09:00', '10:30', 'Kvalitetssäkring', 2),
+(1, CURRENT_DATE - INTERVAL '9 days', '10:30', '10:45', 'Kafferast', NULL),
+(1, CURRENT_DATE - INTERVAL '9 days', '10:45', '12:00', 'Release notes', 3),
+(1, CURRENT_DATE - INTERVAL '9 days', '13:00', '14:00', 'Deploy till produktion', 2),
+(1, CURRENT_DATE - INTERVAL '9 days', '14:00', '15:00', 'Övervakning och kontroll', 2),
+(1, CURRENT_DATE - INTERVAL '9 days', '15:00', '16:00', 'Retrospektiv', 4);
+
+-- Vecka 3 (Denna vecka - varierad arbetsvecka)
+-- Måndag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '6 days', '08:30', '09:00', 'Mejl och dagplanering', 4),
+(1, CURRENT_DATE - INTERVAL '6 days', '09:00', '11:00', 'Ny feature - Analytics', 2),
+(1, CURRENT_DATE - INTERVAL '6 days', '11:00', '11:15', 'Paus', NULL),
+(1, CURRENT_DATE - INTERVAL '6 days', '11:15', '12:00', 'Möte med design-team', 1),
+(1, CURRENT_DATE - INTERVAL '6 days', '13:00', '15:30', 'Implementera tracking', 2),
+(1, CURRENT_DATE - INTERVAL '6 days', '15:30', '17:00', 'Databas-optimering', 2);
+
+-- Tisdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '5 days', '08:00', '08:30', 'Daily standup', 4),
+(1, CURRENT_DATE - INTERVAL '5 days', '08:30', '10:30', 'Frontend komponent library', 1),
+(1, CURRENT_DATE - INTERVAL '5 days', '10:30', '10:45', 'Fikarast', NULL),
+(1, CURRENT_DATE - INTERVAL '5 days', '10:45', '12:00', 'Storybook setup', 1),
+(1, CURRENT_DATE - INTERVAL '5 days', '13:00', '14:30', 'Workshop - Best practices', 4),
+(1, CURRENT_DATE - INTERVAL '5 days', '14:30', '16:30', 'Tillgänglighetsförbättringar', 1),
+(1, CURRENT_DATE - INTERVAL '5 days', '16:30', '17:00', 'Dokumentation', 3);
+
+-- Onsdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '4 days', '08:00', '09:30', 'Arkitektur-diskussion', 4),
+(1, CURRENT_DATE - INTERVAL '4 days', '09:30', '11:30', 'Microservices migration plan', 2),
+(1, CURRENT_DATE - INTERVAL '4 days', '11:30', '11:45', 'Promenad', NULL),
+(1, CURRENT_DATE - INTERVAL '4 days', '11:45', '12:00', 'Mejlhantering', 4),
+(1, CURRENT_DATE - INTERVAL '4 days', '13:00', '15:00', 'Docker containerisering', 2),
+(1, CURRENT_DATE - INTERVAL '4 days', '15:00', '16:00', 'Kubernetes config', 2),
+(1, CURRENT_DATE - INTERVAL '4 days', '16:00', '17:00', 'Team sync', 4);
+
+-- Torsdag
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '3 days', '08:00', '08:45', 'Sprint review', 4),
+(1, CURRENT_DATE - INTERVAL '3 days', '08:45', '10:30', 'Monitoring setup', 2),
+(1, CURRENT_DATE - INTERVAL '3 days', '10:30', '10:45', 'Kafferast', NULL),
+(1, CURRENT_DATE - INTERVAL '3 days', '10:45', '12:00', 'Alerting rules', 2),
+(1, CURRENT_DATE - INTERVAL '3 days', '13:00', '14:30', 'Load testing', 2),
+(1, CURRENT_DATE - INTERVAL '3 days', '14:30', '16:00', 'Performance optimering', 2),
+(1, CURRENT_DATE - INTERVAL '3 days', '16:00', '17:00', 'Teknisk bloggpost', 3);
+
+-- Fredag (Idag)
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE - INTERVAL '2 days', '08:00', '09:00', 'Veckoplanering', 4),
+(1, CURRENT_DATE - INTERVAL '2 days', '09:00', '10:30', 'Säkerhetsuppdateringar', 5),
+(1, CURRENT_DATE - INTERVAL '2 days', '10:30', '10:45', 'Fika', NULL),
+(1, CURRENT_DATE - INTERVAL '2 days', '10:45', '12:00', 'Dependency updates', 5),
+(1, CURRENT_DATE - INTERVAL '2 days', '13:00', '14:00', 'Team retrospektiv', 4),
+(1, CURRENT_DATE - INTERVAL '2 days', '14:00', '15:30', 'Nästa sprint planning', 4),
+(1, CURRENT_DATE - INTERVAL '2 days', '15:30', '16:00', 'Veckoavslut', 4);
+
+-- Dagens aktiviteter (exempel - partiellt ifyllda)
+INSERT INTO log_entries (user_id, entry_date, start_time, end_time, description, project_id) VALUES
+(1, CURRENT_DATE, '08:00', '08:30', 'Mejl och morgonplanering', 4),
+(1, CURRENT_DATE, '08:30', '10:00', 'Code review och PR feedback', 4),
+(1, CURRENT_DATE, '10:00', '10:15', 'Kafferast', NULL),
+(1, CURRENT_DATE, '10:15', NULL, 'Pågående: Daily Log System utveckling', 2);
+
+-- Visa statistik
+SELECT 
+    'Total antal loggposter' as metric, 
+    COUNT(*)::TEXT as value 
+FROM log_entries
+UNION ALL
+SELECT 
+    'Antal dagar med aktivitet', 
+    COUNT(DISTINCT entry_date)::TEXT 
+FROM log_entries
+UNION ALL
+SELECT 
+    'Totalt antal projekt', 
+    COUNT(*)::TEXT 
+FROM projects
+UNION ALL
+SELECT 
+    'Genomsnittlig arbetstid per dag (timmar)', 
+    ROUND(AVG(work_hours), 2)::TEXT 
+FROM daily_summaries
+WHERE work_hours > 0;
