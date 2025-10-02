@@ -48,15 +48,24 @@ check_proxmox() {
     fi
 }
 
-find_next_free_vmid() {
-    log_info "SÃ¶ker efter ledigt container ID..."
-    local used_vmids=$(pvesh get /cluster/resources --type vm --output-format json | grep -oP '"vmid":\K\d+' | sort -n)
-    local start_id=${1:-100}
-    local vmid=$start_id
-    while echo "$used_vmids" | grep -q "^${vmid}$"; do
-        vmid=$((vmid + 1))
-    done
-    echo "$vmid"
+check_vmid() {
+    local vmid=$1
+    if [[ -z "$vmid" ]]; then
+        log_error "Du måste ange ett container ID som argument. Exempel: ./install.sh 100"
+        exit 1
+    fi
+    
+    if ! [[ "$vmid" =~ ^[0-9]+$ ]]; then
+        log_error "Container ID måste vara ett nummer"
+        exit 1
+    fi
+    
+    if pvesh get /cluster/resources --type vm --output-format json | grep -q "\"vmid\":$vmid"; then
+        log_error "Container ID $vmid är redan i användning"
+        exit 1
+    fi
+    
+    return 0
 }
 
 download_template() {
@@ -103,8 +112,9 @@ main() {
     check_root
     check_proxmox
     
-    CONTAINER_ID=$(find_next_free_vmid ${1:-100})
-    log_info "AnvÃ¤nder container ID: ${BLUE}${CONTAINER_ID}${NC}"
+    CONTAINER_ID="$1"
+    check_vmid "$CONTAINER_ID"
+    log_info "Använder container ID: ${BLUE}${CONTAINER_ID}${NC}"
     
     download_template
     
