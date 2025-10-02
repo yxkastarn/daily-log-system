@@ -7,9 +7,14 @@ require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3001;
+const host = '0.0.0.0'; // Lyssna på alla nätverksgränssnitt
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -461,8 +466,8 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(port, () => {
-    console.log(`Daily Log API server running on port ${port}`);
+app.listen(port, host, () => {
+    console.log(`Daily Log API server running on http://${host}:${port}`);
 });
 
 // Graceful shutdown
