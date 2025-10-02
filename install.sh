@@ -109,7 +109,8 @@ main() {
     download_template
     
     log_info "Skapar LXC container..."
-    pct create $CONTAINER_ID local:vztmpl/$TEMPLATE --hostname $CONTAINER_NAME --memory $MEMORY --net0 name=eth0,bridge=$NETWORK,ip=dhcp --rootfs $STORAGE:$DISK_SIZE --features nesting=1 --unprivileged 1 --onboot 1
+    TEMPLATE_PATH="local:vztmpl/$TEMPLATE"
+    pct create "$CONTAINER_ID" "$TEMPLATE_PATH" --hostname "$CONTAINER_NAME" --memory "$MEMORY" --net0 "name=eth0,bridge=$NETWORK,ip=dhcp" --rootfs "$STORAGE:$DISK_SIZE" --features "nesting=1" --unprivileged 1 --onboot 1
     
     log_info "Startar container..."
     pct start $CONTAINER_ID
