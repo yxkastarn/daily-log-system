@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Log System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -15,6 +17,13 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        @media print {
+            body { background: none; }
+            .glass { background: white; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
     </style>
 </head>
 <body class="text-white">
@@ -71,10 +80,20 @@
 
                 <!-- Entries List -->
                 <div class="glass rounded-2xl p-6 shadow-2xl">
-                    <h2 class="text-2xl font-bold mb-6">
-                        Dagens Aktiviteter
-                        <span id="entryCount" class="ml-2 text-sm font-normal text-gray-300">(0 st)</span>
-                    </h2>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">
+                            Dagens Aktiviteter
+                            <span id="entryCount" class="ml-2 text-sm font-normal text-gray-300">(0 st)</span>
+                        </h2>
+                        <div class="space-x-2">
+                            <button onclick="generateTimesheet('week')" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-sm">
+                                Veckotidssedel
+                            </button>
+                            <button onclick="generateTimesheet('year')" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-sm">
+                                Årstidssedel
+                            </button>
+                        </div>
+                    </div>
                     <div id="entriesList" class="space-y-3">
                         <div class="text-center py-8 text-gray-300">Inga aktiviteter ännu...</div>
                     </div>
@@ -108,7 +127,7 @@
                 <div class="glass rounded-2xl p-6 shadow-2xl">
                     <h3 class="text-xl font-bold mb-4">Snabblänkar</h3>
                     <div class="space-y-3">
-                        <a href="/grafana" target="_blank" class="block bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-all">
+                        <a href="http://localhost:3000" target="_blank" class="block bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-all">
                             <div class="flex items-center space-x-3">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -127,6 +146,7 @@
 
     <script>
         const API_URL = '/api';
+        window.jsPDF = window.jspdf.jsPDF;
         
         // Set today's date as default
         document.getElementById('entryDate').valueAsDate = new Date();
@@ -150,21 +170,24 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         entry_date: date,
-                        start_time: time,
+                        entry_time: time,
                         description: description
                     })
                 });
 
-                if (response.ok) {
-                    document.getElementById('entryTime').value = '';
-                    document.getElementById('entryDescription').value = '';
-                    loadEntries();
-                } else {
-                    alert('Kunde inte lägga till aktivitet');
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const result = await response.json();
+                if (result.error) {
+                    throw new Error(result.error);
                 }
+
+                document.getElementById('entryTime').value = '';
+                document.getElementById('entryDescription').value = '';
+                loadEntries();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Ett fel uppstod');
+                alert('Fel vid tillägg av aktivitet: ' + error.message);
             }
         }
 
@@ -244,6 +267,128 @@
                 console.error('Error:', error);
                 alert('Ett fel uppstod');
             }
+        }
+
+        async function generateTimesheet(period) {
+            try {
+                let startDate, endDate, title;
+                const today = new Date(document.getElementById('entryDate').value);
+                
+                if (period === 'week') {
+                    // Måndag denna vecka
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - today.getDay() + 1);
+                    
+                    // Söndag denna vecka
+                    endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 6);
+                    
+                    title = `Veckotidssedel: Vecka ${getWeekNumber(today)}`;
+                } else {
+                    // Första dagen på året
+                    startDate = new Date(today.getFullYear(), 0, 1);
+                    // Sista dagen på året
+                    endDate = new Date(today.getFullYear(), 11, 31);
+                    title = `Årstidssedel: ${today.getFullYear()}`;
+                }
+
+                const response = await fetch(
+                    `${API_URL}/entries?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`
+                );
+
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                generatePDF(data.entries || [], title, startDate, endDate);
+            } catch (error) {
+                console.error('Error generating timesheet:', error);
+                alert('Kunde inte generera tidssedel: ' + error.message);
+            }
+        }
+
+        function generatePDF(entries, title, startDate, endDate) {
+            const doc = new jsPDF();
+            
+            // Dokumenthuvud
+            doc.setFontSize(20);
+            doc.text(title, 20, 20);
+            
+            doc.setFontSize(12);
+            doc.text(`Period: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`, 20, 30);
+            
+            // Gruppera aktiviteter per dag
+            const groupedEntries = {};
+            entries.forEach(entry => {
+                const date = entry.entry_date;
+                if (!groupedEntries[date]) {
+                    groupedEntries[date] = [];
+                }
+                groupedEntries[date].push(entry);
+            });
+
+            // Generera tabelldata
+            const tableData = Object.entries(groupedEntries).map(([date, dayEntries]) => {
+                const totalHours = dayEntries.reduce((total, entry) => {
+                    if (entry.end_time) {
+                        const start = new Date(`2000-01-01 ${entry.entry_time}`);
+                        const end = new Date(`2000-01-01 ${entry.end_time}`);
+                        return total + (end - start) / (1000 * 60 * 60);
+                    }
+                    return total;
+                }, 0);
+
+                return [
+                    new Date(date).toLocaleDateString('sv-SE', {weekday: 'long', month: 'long', day: 'numeric'}),
+                    dayEntries.length,
+                    totalHours.toFixed(2) + 'h',
+                    dayEntries.map(e => e.description).join(', ')
+                ];
+            });
+
+            // Skapa tabell
+            doc.autoTable({
+                startY: 40,
+                head: [['Datum', 'Antal', 'Timmar', 'Aktiviteter']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [102, 126, 234],
+                    textColor: 255,
+                    fontSize: 10
+                },
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 3
+                },
+                columnStyles: {
+                    0: {cellWidth: 40},
+                    1: {cellWidth: 20},
+                    2: {cellWidth: 20},
+                    3: {cellWidth: 'auto'}
+                }
+            });
+
+            // Summering
+            const totalEntries = entries.length;
+            const totalHours = tableData.reduce((sum, row) => sum + parseFloat(row[2]), 0).toFixed(2);
+            
+            const finalY = doc.lastAutoTable.finalY || 150;
+            doc.setFontSize(12);
+            doc.text(`Totalt antal aktiviteter: ${totalEntries}`, 20, finalY + 20);
+            doc.text(`Total arbetstid: ${totalHours}h`, 20, finalY + 30);
+
+            // Spara PDF
+            doc.save(`tidssedel_${startDate.toISOString().split('T')[0]}_${endDate.toISOString().split('T')[0]}.pdf`);
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+            return weekNo;
         }
 
         // Reload entries when date changes
