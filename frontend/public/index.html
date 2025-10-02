@@ -130,7 +130,7 @@
                 <div class="glass rounded-2xl p-6 shadow-2xl">
                     <h3 class="text-xl font-bold mb-4">Snabblänkar</h3>
                     <div class="space-y-3">
-                        <a href="http://localhost:3000" target="_blank" class="block bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-all">
+                        <a id="grafanaLink" href="#" target="_blank" class="block bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-all">
                             <div class="flex items-center space-x-3">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -148,8 +148,38 @@
     </div>
 
     <script>
-        const API_URL = '/api';
+        // Hämta API URL från window.location
+        const currentHost = window.location.hostname;
+        const API_URL = `http://${currentHost}:3001/api`;
         window.jsPDF = window.jspdf.jsPDF;
+
+        // Konfigurera API-anrop för CORS
+        async function fetchWithCORS(url, options = {}) {
+            const defaultOptions = {
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                ...options
+            };
+            try {
+                const response = await fetch(url, defaultOptions);
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error);
+                }
+                return response;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // Sätt Grafana-länken dynamiskt baserat på aktuell URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentHost = window.location.hostname;
+            document.getElementById('grafanaLink').href = `http://${currentHost}:3000`;
+        });
         
         // Set today's date as default
         document.getElementById('entryDate').valueAsDate = new Date();
@@ -168,9 +198,8 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/entries`, {
+                const response = await fetchWithCORS(`${API_URL}/entries`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         entry_date: date,
                         start_time: time,
@@ -198,7 +227,7 @@
             const date = document.getElementById('entryDate').value;
             
             try {
-                const response = await fetch(`${API_URL}/entries?start_date=${date}&end_date=${date}`);
+                const response = await fetchWithCORS(`${API_URL}/entries?start_date=${date}&end_date=${date}`);
                 const data = await response.json();
                 
                 displayEntries(data.entries || []);
@@ -257,7 +286,7 @@
             if (!confirm('Är du säker på att du vill ta bort denna post?')) return;
 
             try {
-                const response = await fetch(`${API_URL}/entries/${id}`, {
+                const response = await fetchWithCORS(`${API_URL}/entries/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -303,7 +332,7 @@
                     title = `Årstidssedel: ${today.getFullYear()}`;
                 }
 
-                const response = await fetch(
+                const response = await fetchWithCORS(
                     `${API_URL}/entries?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`
                 );
 
