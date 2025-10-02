@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Daily Log System - Automatisk Proxmox LXC Installation
-# FÃ¶rfattare: yxkastarn
+# Författare: yxkastarn
 
 set -e
 
@@ -113,12 +113,12 @@ main() {
     pct create "$CONTAINER_ID" "$TEMPLATE_PATH" --hostname "$CONTAINER_NAME" --memory "$MEMORY" --net0 "name=eth0,bridge=$NETWORK,ip=dhcp" --rootfs "$STORAGE:$DISK_SIZE" --features "nesting=1" --unprivileged 1 --onboot 1
     
     log_info "Startar container..."
-    pct start $CONTAINER_ID
+    pct start "$CONTAINER_ID"
     sleep 10
     
     log_info "Installerar paket (detta tar nÃ¥gra minuter)..."
-    pct exec $CONTAINER_ID -- bash -c "DEBIAN_FRONTEND=noninteractive apt update && apt upgrade -y"
-    pct exec $CONTAINER_ID -- bash -c "DEBIAN_FRONTEND=noninteractive apt install -y curl wget git nano sudo postgresql postgresql-contrib nginx software-properties-common apt-transport-https gnupg"
+    pct exec "$CONTAINER_ID" -- bash -c "DEBIAN_FRONTEND=noninteractive apt update && apt upgrade -y"
+    pct exec "$CONTAINER_ID" -- bash -c "DEBIAN_FRONTEND=noninteractive apt install -y curl wget git nano sudo postgresql postgresql-contrib nginx software-properties-common apt-transport-https gnupg"
     
     log_info "Installerar Node.js 18..."
     pct exec $CONTAINER_ID -- bash -c "curl -fsSL https://deb.nodesource.com/setup_18.x | bash -"
@@ -147,7 +147,7 @@ main() {
     pct exec $CONTAINER_ID -- bash -c "sudo -u postgres psql -d daily_log -c \"GRANT ALL ON SCHEMA public TO dailylog;\""
     
     log_info "Installerar backend dependencies..."
-    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && npm install"
+    pct exec "$CONTAINER_ID" -- bash -c "cd /opt/daily-log-system/backend && npm install"
     
     log_info "Konfigurerar backend..."
     pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && cp .env.example .env"
