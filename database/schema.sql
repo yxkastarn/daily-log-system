@@ -1,6 +1,3 @@
-cd ~/daily-log-system
-mkdir -p database
-cat > database/schema.sql << 'EOFSQL'
 -- Daily Log System Database Schema
 -- PostgreSQL 14+
 
@@ -196,4 +193,3 @@ ORDER BY hour;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dailylog;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO dailylog;
 GRANT ALL PRIVILEGES ON DATABASE daily_log TO dailylog;
-EOFSQL
