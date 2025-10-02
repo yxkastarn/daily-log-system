@@ -1,3 +1,5 @@
+cd ~/daily-log-system
+cat > install.sh << 'EOFINSTALL'
 #!/bin/bash
 
 set -e
@@ -25,15 +27,47 @@ check_root() {
     fi
 }
 
-find_next_free_vmid() {
-    log_info "Söker efter ledigt container ID..."
-    local used_vmids=$(pvesh get /cluster/resources --type vm --output-format json 2>/dev/null | grep -oP '"vmid":\K\d+' | sort -n)
-    local start_id=${1:-100}
-    local vmid=$start_id
-    while echo "$used_vmids" | grep -q "^${vmid}$"; do
-        vmid=$((vmid + 1))
+check_container_exists() {
+    if pct status $1 &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+prompt_container_id() {
+    echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗"
+    echo "║         Daily Log System - Proxmox Installation           ║"
+    echo "╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${YELLOW}Befintliga containers:${NC}"
+    pct list
+    echo ""
+    
+    while true; do
+        read -p "$(echo -e ${BLUE}Ange container ID för Daily Log System: ${NC})" CONTAINER_ID
+        
+        if [[ ! "$CONTAINER_ID" =~ ^[0-9]+$ ]]; then
+            log_error "Container ID måste vara ett nummer"
+            continue
+        fi
+        
+        if check_container_exists "$CONTAINER_ID"; then
+            log_warn "Container ID $CONTAINER_ID finns redan!"
+            read -p "Vill du ta bort den och fortsätta? (y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                log_info "Stoppar och tar bort container $CONTAINER_ID..."
+                pct stop $CONTAINER_ID 2>/dev/null || true
+                pct destroy $CONTAINER_ID
+                break
+            fi
+        else
+            break
+        fi
     done
-    echo "$vmid"
+    
+    echo "$CONTAINER_ID"
 }
 
 download_template() {
@@ -42,19 +76,18 @@ download_template() {
         log_info "Template finns redan"
         return 0
     fi
-    log_info "Laddar ner template..."
+    log_info "Laddar ner Ubuntu 22.04 template..."
     pveam update
     pveam download local "$TEMPLATE"
+    log_info "✓ Template nedladdad"
 }
 
 main() {
-    echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗"
-    echo "║         Daily Log System - Proxmox Installation           ║"
-    echo "╚════════════════════════════════════════════════════════════╝${NC}"
-    
     check_root
     
-    CONTAINER_ID=$(find_next_free_vmid ${1:-100})
+    # Prompt för container ID
+    CONTAINER_ID=$(prompt_container_id)
+    
     log_info "Använder container ID: ${BLUE}${CONTAINER_ID}${NC}"
     
     download_template
@@ -136,11 +169,22 @@ main() {
     echo ""
     echo -e "  ${GREEN}✓${NC} Webbgränssnitt: ${YELLOW}http://${CONTAINER_IP}${NC}"
     echo -e "  ${GREEN}✓${NC} Grafana: ${YELLOW}http://${CONTAINER_IP}:3000${NC}"
-    echo -e "      User: ${YELLOW}admin${NC} / Pass: ${YELLOW}admin${NC} ${RED}(ändra!)${NC}"
+    echo -e "      User: ${YELLOW}admin${NC} / Pass: ${YELLOW}admin${NC} ${RED}(ändra vid första inloggning!)${NC}"
     echo ""
-    echo -e "Logga in: ${YELLOW}pct enter ${CONTAINER_ID}${NC}"
+    echo -e "Användbara kommandon:"
+    echo -e "  Logga in i container: ${YELLOW}pct enter ${CONTAINER_ID}${NC}"
+    echo -e "  Se backend-loggar:    ${YELLOW}pct exec ${CONTAINER_ID} -- pm2 logs${NC}"
+    echo -e "  Stoppa container:     ${YELLOW}pct stop ${CONTAINER_ID}${NC}"
+    echo -e "  Starta container:     ${YELLOW}pct start ${CONTAINER_ID}${NC}"
+    echo ""
+    echo -e "${GREEN}Lycka till med Daily Log System! 🚀${NC}"
     echo ""
 }
 
 main "$@"
 EOFINSTALL
+
+chmod +x install.sh
+git add install.sh
+git commit -m "Interactive prompt for container ID with existing container check"
+git push
