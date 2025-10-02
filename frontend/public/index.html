@@ -148,9 +148,8 @@
     </div>
 
     <script>
-        // Hämta API URL från window.location
-        const currentHost = window.location.hostname;
-        const API_URL = `http://${currentHost}:3001/api`;
+        // API URL relativt till nuvarande sida
+        const API_URL = '/api';
         window.jsPDF = window.jspdf.jsPDF;
 
         // Konfigurera API-anrop för CORS
