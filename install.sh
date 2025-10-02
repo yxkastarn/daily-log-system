@@ -2,6 +2,7 @@
 
 # Daily Log System - Automatisk Proxmox LXC Installation
 # Författare: yxkastarn
+# Beskrivning: Skapar och konfigurerar en komplett Daily Log-applikation i LXC
 
 set -e
 
@@ -9,7 +10,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
 # Variabler
 CONTAINER_ID=${1:-100}
@@ -21,6 +22,7 @@ STORAGE="local-lvm"
 NETWORK="vmbr0"
 REPO_URL="https://github.com/yxkastarn/daily-log-system.git"
 
+# Funktioner
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
 }
@@ -47,6 +49,7 @@ check_proxmox() {
     fi
 }
 
+# Huvudinstallation
 main() {
     log_info "=== Daily Log System Installation ==="
     echo ""
@@ -83,6 +86,8 @@ main() {
     
     log_info "Startar container..."
     pct start $CONTAINER_ID
+    
+    # Vänta på att container ska starta
     sleep 5
     
     log_info "Installerar grundläggande paket..."
@@ -131,9 +136,14 @@ main() {
     
     # Starta backend med PM2
     log_info "Startar backend-tjänst..."
-    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && pm2 start server.js --name daily-log-api"
+    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && pm2 start npm --name daily-log-api -- start"
     pct exec $CONTAINER_ID -- bash -c "pm2 startup systemd -u root --hp /root"
     pct exec $CONTAINER_ID -- bash -c "pm2 save"
+    
+    # Bygg frontend
+    log_info "Bygger frontend..."
+    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/frontend && npm install"
+    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/frontend && npm run build"
     
     # Konfigurera Nginx
     log_info "Konfigurerar Nginx..."
@@ -149,8 +159,15 @@ main() {
     
     # Importera Grafana dashboards
     log_info "Importerar Grafana dashboards..."
-    sleep 10
+    sleep 10 # Vänta på att Grafana startar
     pct exec $CONTAINER_ID -- bash -c "bash /opt/daily-log-system/scripts/setup-grafana.sh"
+    
+    # Konfigurera brandvägg
+    log_info "Konfigurerar brandvägg..."
+    pct exec $CONTAINER_ID -- bash -c "apt install -y ufw"
+    pct exec $CONTAINER_ID -- bash -c "ufw --force enable"
+    pct exec $CONTAINER_ID -- bash -c "ufw allow 80/tcp"
+    pct exec $CONTAINER_ID -- bash -c "ufw allow 3000/tcp"
     
     # Hämta IP-adress
     CONTAINER_IP=$(pct exec $CONTAINER_ID -- hostname -I | awk '{print $1}')
@@ -164,6 +181,14 @@ main() {
     echo -e "  - Användarnamn: admin"
     echo -e "  - Lösenord: admin (ändra vid första inloggningen)"
     echo ""
+    echo -e "${YELLOW}Nästa steg:${NC}"
+    echo "1. Öppna webbgränssnittet och skapa din första loggpost"
+    echo "2. Importera befintliga Excel-data via Import-funktionen"
+    echo "3. Utforska Grafana-dashboards för statistik och analys"
+    echo ""
+    log_info "För att komma åt containern: pct enter $CONTAINER_ID"
+    log_info "För att se backend-loggar: pct exec $CONTAINER_ID -- pm2 logs"
 }
 
+# Kör installation
 main "$@"

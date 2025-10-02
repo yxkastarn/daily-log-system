@@ -1,3 +1,5 @@
+cd ~/daily-log-system
+cat > frontend/public/index.html << 'EOFHTML'
 <!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -5,54 +7,250 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Log System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white min-h-screen">
+<body class="text-white">
     <div class="container mx-auto px-4 py-8">
-        <header class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 shadow-2xl">
-            <h1 class="text-3xl font-bold">Daily Log System</h1>
-            <p class="text-gray-300">Spåra dina dagliga aktiviteter</p>
+        <!-- Header -->
+        <header class="glass rounded-2xl p-6 mb-8 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-xl">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold">Daily Log System</h1>
+                        <p class="text-sm text-gray-300">Spåra dina dagliga aktiviteter</p>
+                    </div>
+                </div>
+            </div>
         </header>
-        
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-white/10 backdrop-blur-lg rounded-2xl p-6">
-                <h2 class="text-2xl font-bold mb-4">Ny Aktivitet</h2>
-                <div class="space-y-4">
-                    <input type="date" id="entryDate" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
-                    <input type="time" id="entryTime" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
-                    <input type="text" id="entryDescription" placeholder="Beskrivning" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white">
-                    <button onclick="addEntry()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-lg font-semibold">Lägg till</button>
+            <!-- Left Column: New Entry Form -->
+            <div class="lg:col-span-2">
+                <div class="glass rounded-2xl p-6 mb-6 shadow-2xl">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center space-x-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>Ny Aktivitet</span>
+                    </h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Datum</label>
+                            <input type="date" id="entryDate" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Tid</label>
+                            <input type="time" id="entryTime" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Beskrivning</label>
+                            <input type="text" id="entryDescription" placeholder="Vad gjorde du?" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                        </div>
+
+                        <button onclick="addEntry()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-semibold px-6 py-3 rounded-lg transition-all shadow-lg">
+                            Lägg till aktivitet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Entries List -->
+                <div class="glass rounded-2xl p-6 shadow-2xl">
+                    <h2 class="text-2xl font-bold mb-6">
+                        Dagens Aktiviteter
+                        <span id="entryCount" class="ml-2 text-sm font-normal text-gray-300">(0 st)</span>
+                    </h2>
+                    <div id="entriesList" class="space-y-3">
+                        <div class="text-center py-8 text-gray-300">Inga aktiviteter ännu...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Summary -->
+            <div class="space-y-6">
+                <div class="glass rounded-2xl p-6 shadow-2xl">
+                    <h3 class="text-xl font-bold mb-4">Sammanfattning</h3>
+
+                    <div class="space-y-4">
+                        <div class="bg-white/10 rounded-lg p-4">
+                            <div class="text-sm text-gray-300 mb-1">Arbetstid (exkl. lunch)</div>
+                            <div class="text-3xl font-bold" id="workHours">0.00h</div>
+                        </div>
+
+                        <div class="bg-white/10 rounded-lg p-4">
+                            <div class="text-sm text-gray-300 mb-1">Antal aktiviteter</div>
+                            <div class="text-3xl font-bold" id="activityCount">0</div>
+                        </div>
+
+                        <div class="bg-white/10 rounded-lg p-4">
+                            <div class="text-sm text-gray-300 mb-1">Lunchtid</div>
+                            <div class="text-3xl font-bold">0.5h</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="glass rounded-2xl p-6 shadow-2xl">
+                    <h3 class="text-xl font-bold mb-4">Snabblänkar</h3>
+                    <div class="space-y-3">
+                        <a href="/grafana" target="_blank" class="block bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-all">
+                            <div class="flex items-center space-x-3">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                <div>
+                                    <div class="font-semibold">Grafana Dashboard</div>
+                                    <div class="text-xs text-gray-300">Visa statistik och grafer</div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script>
         const API_URL = '/api';
-        document.getElementById('entryDate').valueAsDate = new Date();
         
+        // Set today's date as default
+        document.getElementById('entryDate').valueAsDate = new Date();
+
+        // Load entries on page load
+        loadEntries();
+
         async function addEntry() {
             const date = document.getElementById('entryDate').value;
             const time = document.getElementById('entryTime').value;
             const description = document.getElementById('entryDescription').value;
-            
+
             if (!date || !time || !description) {
                 alert('Alla fält måste fyllas i');
                 return;
             }
-            
+
             try {
-                await fetch(`${API_URL}/entries`, {
+                const response = await fetch(`${API_URL}/entries`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ entry_date: date, start_time: time, description })
+                    body: JSON.stringify({
+                        entry_date: date,
+                        start_time: time,
+                        description: description
+                    })
                 });
-                alert('Aktivitet tillagd!');
-                document.getElementById('entryTime').value = '';
-                document.getElementById('entryDescription').value = '';
+
+                if (response.ok) {
+                    document.getElementById('entryTime').value = '';
+                    document.getElementById('entryDescription').value = '';
+                    loadEntries();
+                } else {
+                    alert('Kunde inte lägga till aktivitet');
+                }
             } catch (error) {
+                console.error('Error:', error);
                 alert('Ett fel uppstod');
             }
         }
+
+        async function loadEntries() {
+            const date = document.getElementById('entryDate').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/entries?start_date=${date}&end_date=${date}`);
+                const data = await response.json();
+                
+                displayEntries(data.entries || []);
+                updateSummary(data.entries || []);
+            } catch (error) {
+                console.error('Error loading entries:', error);
+            }
+        }
+
+        function displayEntries(entries) {
+            const container = document.getElementById('entriesList');
+            document.getElementById('entryCount').textContent = `(${entries.length} st)`;
+            
+            if (entries.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-300">Inga aktiviteter registrerade för detta datum</div>';
+                return;
+            }
+
+            container.innerHTML = entries.map(entry => `
+                <div class="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-all">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-purple-300 font-mono text-sm">${entry.start_time}</span>
+                            </div>
+                            <p class="text-white">${entry.description}</p>
+                        </div>
+                        <button onclick="deleteEntry(${entry.id})" class="text-red-400 hover:text-red-300 transition-colors text-2xl">
+                            ×
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateSummary(entries) {
+            document.getElementById('activityCount').textContent = entries.length;
+            
+            let totalMinutes = 0;
+            entries.forEach(entry => {
+                if (entry.end_time) {
+                    const start = new Date(`2000-01-01 ${entry.start_time}`);
+                    const end = new Date(`2000-01-01 ${entry.end_time}`);
+                    totalMinutes += (end - start) / (1000 * 60);
+                }
+            });
+            
+            const workHours = Math.max(0, (totalMinutes / 60) - 0.5).toFixed(2);
+            document.getElementById('workHours').textContent = `${workHours}h`;
+        }
+
+        async function deleteEntry(id) {
+            if (!confirm('Är du säker på att du vill ta bort denna post?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/entries/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadEntries();
+                } else {
+                    alert('Kunde inte ta bort aktivitet');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ett fel uppstod');
+            }
+        }
+
+        // Reload entries when date changes
+        document.getElementById('entryDate').addEventListener('change', loadEntries);
     </script>
 </body>
 </html>
+EOFHTML

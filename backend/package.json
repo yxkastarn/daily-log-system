@@ -9,7 +9,11 @@
     "migrate": "node migrations/run-migrations.js",
     "test": "jest --coverage"
   },
-  "keywords": ["daily-log", "time-tracking", "api"],
+  "keywords": [
+    "daily-log",
+    "time-tracking",
+    "api"
+  ],
   "author": "yxkastarn",
   "license": "MIT",
   "dependencies": {
