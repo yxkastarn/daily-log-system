@@ -56,20 +56,20 @@
                         <span>Ny Aktivitet</span>
                     </h2>
 
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Datum</label>
-                            <input type="date" id="entryDate" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium mb-1">Datum</label>
+                            <input type="date" id="entryDate" class="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Tid</label>
-                            <input type="time" id="entryTime" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium mb-1">Tid</label>
+                            <input type="time" id="entryTime" class="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Beskrivning</label>
-                            <input type="text" id="entryDescription" placeholder="Vad gjorde du?" class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                        <div class="col-span-3">
+                            <label class="block text-sm font-medium mb-1">Beskrivning</label>
+                            <input type="text" id="entryDescription" placeholder="Vad gjorde du?" class="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:outline-none">
                         </div>
 
                         <button onclick="addEntry()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-semibold px-6 py-3 rounded-lg transition-all shadow-lg">
@@ -85,12 +85,15 @@
                             Dagens Aktiviteter
                             <span id="entryCount" class="ml-2 text-sm font-normal text-gray-300">(0 st)</span>
                         </h2>
-                        <div class="space-x-2">
-                            <button onclick="generateTimesheet('week')" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-sm">
-                                Veckotidssedel
+                        <div class="flex space-x-2">
+                            <button onclick="generateTimesheet('week')" class="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 rounded-lg text-sm">
+                                Vecka
                             </button>
-                            <button onclick="generateTimesheet('year')" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-sm">
-                                Årstidssedel
+                            <button onclick="generateTimesheet('month')" class="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 rounded-lg text-sm">
+                                Månad
+                            </button>
+                            <button onclick="generateTimesheet('year')" class="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 rounded-lg text-sm">
+                                År
                             </button>
                         </div>
                     </div>
@@ -284,6 +287,14 @@
                     endDate.setDate(startDate.getDate() + 6);
                     
                     title = `Veckotidssedel: Vecka ${getWeekNumber(today)}`;
+                } else if (period === 'month') {
+                    // Första dagen i månaden
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    
+                    // Sista dagen i månaden
+                    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    
+                    title = `Månadstidssedel: ${startDate.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' })}`;
                 } else {
                     // Första dagen på året
                     startDate = new Date(today.getFullYear(), 0, 1);
