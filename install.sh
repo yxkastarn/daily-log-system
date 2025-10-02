@@ -1,11 +1,11 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # Daily Log System - Automatisk Proxmox LXC Installation
-# Författare: yxkastarn
+# FÃ¶rfattare: yxkastarn
 
 set -e
 
-# Färger för output
+# FÃ¤rger fÃ¶r output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -36,7 +36,7 @@ log_error() {
 
 check_root() {
     if [[ $EUID -ne 0 ]]; then
-        log_error "Detta script måste köras som root"
+        log_error "Detta script mÃ¥ste kÃ¶ras som root"
         exit 1
     fi
 }
@@ -49,7 +49,7 @@ check_proxmox() {
 }
 
 find_next_free_vmid() {
-    log_info "Söker efter ledigt container ID..."
+    log_info "SÃ¶ker efter ledigt container ID..."
     local used_vmids=$(pvesh get /cluster/resources --type vm --output-format json | grep -oP '"vmid":\K\d+' | sort -n)
     local start_id=${1:-100}
     local vmid=$start_id
@@ -72,39 +72,39 @@ download_template() {
 
 ensure_files_exist() {
     local cid=$1
-    log_info "Säkerställer att alla filer finns..."
+    log_info "SÃ¤kerstÃ¤ller att alla filer finns..."
     
     # Kontrollera schema.sql
     if ! pct exec $cid -- test -f /opt/daily-log-system/database/schema.sql; then
-        log_warn "schema.sql saknas, hämtar från GitHub..."
+        log_warn "schema.sql saknas, hÃ¤mtar frÃ¥n GitHub..."
         pct exec $cid -- bash -c "curl -sL ${RAW_URL}/database/schema.sql -o /opt/daily-log-system/database/schema.sql"
     fi
     
     # Kontrollera index.html
     if ! pct exec $cid -- test -f /opt/daily-log-system/frontend/public/index.html; then
-        log_warn "index.html saknas, hämtar från GitHub..."
+        log_warn "index.html saknas, hÃ¤mtar frÃ¥n GitHub..."
         pct exec $cid -- bash -c "curl -sL ${RAW_URL}/frontend/public/index.html -o /opt/daily-log-system/frontend/public/index.html"
     fi
     
     # Kontrollera nginx.conf
     if ! pct exec $cid -- test -f /opt/daily-log-system/nginx.conf; then
-        log_warn "nginx.conf saknas, hämtar från GitHub..."
+        log_warn "nginx.conf saknas, hÃ¤mtar frÃ¥n GitHub..."
         pct exec $cid -- bash -c "curl -sL ${RAW_URL}/nginx.conf -o /opt/daily-log-system/nginx.conf"
     fi
     
-    log_info "✓ Alla nödvändiga filer finns"
+    log_info "âœ“ Alla nÃ¶dvÃ¤ndiga filer finns"
 }
 
 main() {
-    echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗"
-    echo "║         Daily Log System - Proxmox Installation           ║"
-    echo "╚════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+    echo "â•‘         Daily Log System - Proxmox Installation           â•‘"
+    echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•${NC}"
     
     check_root
     check_proxmox
     
     CONTAINER_ID=$(find_next_free_vmid ${1:-100})
-    log_info "Använder container ID: ${BLUE}${CONTAINER_ID}${NC}"
+    log_info "AnvÃ¤nder container ID: ${BLUE}${CONTAINER_ID}${NC}"
     
     download_template
     
@@ -122,7 +122,7 @@ main() {
     pct start $CONTAINER_ID
     sleep 10
     
-    log_info "Installerar paket (detta tar några minuter)..."
+    log_info "Installerar paket (detta tar nÃ¥gra minuter)..."
     pct exec $CONTAINER_ID -- bash -c "DEBIAN_FRONTEND=noninteractive apt update && apt upgrade -y"
     pct exec $CONTAINER_ID -- bash -c "DEBIAN_FRONTEND=noninteractive apt install -y curl wget git nano sudo postgresql postgresql-contrib nginx software-properties-common apt-transport-https gnupg"
     
@@ -137,13 +137,13 @@ main() {
     pct exec $CONTAINER_ID -- bash -c "echo 'deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main' > /etc/apt/sources.list.d/grafana.list"
     pct exec $CONTAINER_ID -- bash -c "apt update && DEBIAN_FRONTEND=noninteractive apt install -y grafana"
     
-    log_info "Klonar repository från GitHub..."
+    log_info "Klonar repository frÃ¥n GitHub..."
     pct exec $CONTAINER_ID -- bash -c "cd /opt && git clone $REPO_URL"
     
     log_info "Skapar katalogstruktur..."
     pct exec $CONTAINER_ID -- bash -c "mkdir -p /opt/daily-log-system/database /opt/daily-log-system/frontend/public /opt/daily-log-system/grafana /opt/daily-log-system/scripts"
     
-    # Säkerställ att alla filer finns (hämtar från GitHub om de saknas)
+    # SÃ¤kerstÃ¤ll att alla filer finns (hÃ¤mtar frÃ¥n GitHub om de saknas)
     ensure_files_exist $CONTAINER_ID
     
     log_info "Konfigurerar PostgreSQL..."
@@ -158,7 +158,7 @@ main() {
     log_info "Konfigurerar backend..."
     pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && cp .env.example .env"
     
-    log_info "Kör databas-migrationer..."
+    log_info "KÃ¶r databas-migrationer..."
     pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && npm run migrate"
     
     log_info "Startar backend API..."
@@ -180,34 +180,33 @@ main() {
     CONTAINER_IP=$(pct exec $CONTAINER_ID -- hostname -I | awk '{print $1}')
     
     echo ""
-    echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗"
-    echo "║              Installation Slutförd! 🎉                     ║"
-    echo "╚════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—"
+    echo "â•‘              Installation SlutfÃ¶rd! ðŸŽ‰                     â•‘"
+    echo "â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•${NC}"
     echo ""
     echo -e "${BLUE}Container Information:${NC}"
     echo -e "  ID: ${GREEN}${CONTAINER_ID}${NC}"
     echo -e "  IP: ${GREEN}${CONTAINER_IP}${NC}"
     echo ""
-    echo -e "${BLUE}Åtkomst:${NC}"
-    echo -e "  ${GREEN}✓${NC} Webbgränssnitt: ${YELLOW}http://${CONTAINER_IP}${NC}"
-    echo -e "  ${GREEN}✓${NC} Grafana:        ${YELLOW}http://${CONTAINER_IP}:3000${NC}"
-    echo -e "      - Användarnamn: ${YELLOW}admin${NC}"
-    echo -e "      - Lösenord:     ${YELLOW}admin${NC} ${RED}(ändra vid första inloggningen!)${NC}"
+    echo -e "${BLUE}Ã…tkomst:${NC}"
+    echo -e "  ${GREEN}âœ“${NC} WebbgrÃ¤nssnitt: ${YELLOW}http://${CONTAINER_IP}${NC}"
+    echo -e "  ${GREEN}âœ“${NC} Grafana:        ${YELLOW}http://${CONTAINER_IP}:3000${NC}"
+    echo -e "      - AnvÃ¤ndarnamn: ${YELLOW}admin${NC}"
+    echo -e "      - LÃ¶senord:     ${YELLOW}admin${NC} ${RED}(Ã¤ndra vid fÃ¶rsta inloggningen!)${NC}"
     echo ""
-    echo -e "${BLUE}Nästa steg:${NC}"
-    echo "  1. Öppna webbgränssnittet och registrera din första aktivitet"
-    echo "  2. Logga in på Grafana och utforska dashboards"
-    echo "  3. Ändra standardlösenord för Grafana"
+    echo -e "${BLUE}NÃ¤sta steg:${NC}"
+    echo "  1. Ã–ppna webbgrÃ¤nssnittet och registrera din fÃ¶rsta aktivitet"
+    echo "  2. Logga in pÃ¥ Grafana och utforska dashboards"
+    echo "  3. Ã„ndra standardlÃ¶senord fÃ¶r Grafana"
     echo ""
-    echo -e "${BLUE}Användbara kommandon:${NC}"
+    echo -e "${BLUE}AnvÃ¤ndbara kommandon:${NC}"
     echo -e "  Logga in i container: ${YELLOW}pct enter ${CONTAINER_ID}${NC}"
     echo -e "  Se backend-loggar:    ${YELLOW}pct exec ${CONTAINER_ID} -- pm2 logs${NC}"
     echo -e "  Stoppa container:     ${YELLOW}pct stop ${CONTAINER_ID}${NC}"
     echo -e "  Starta container:     ${YELLOW}pct start ${CONTAINER_ID}${NC}"
     echo ""
-    echo -e "${GREEN}Lycka till med Daily Log System! 🚀${NC}"
+    echo -e "${GREEN}Lycka till med Daily Log System! ðŸš€${NC}"
     echo ""
 }
 
 main "$@"
-EOFINSTALL
