@@ -250,6 +250,10 @@ cd /opt/daily-log-system
 git pull
 cd backend && npm install && pm2 restart daily-log-api
 cd ../frontend && npm install && npm run build
+# Klona hela repot (om du vill ha allt)
+git clone https://github.com/yxkastarn/daily-log-system.git temp
+cp -r temp/* /opt/daily-log-system/
+rm -rf temp
 ```
 
 ## Felsökning
