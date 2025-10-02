@@ -1,8 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
-const multer = require('multer');
-const XLSX = require('xlsx');
 require('dotenv').config();
 
 const app = express();
@@ -36,8 +34,7 @@ pool.query('SELECT NOW()', (err, res) => {
     }
 });
 
-// Multer for file uploads
-const upload = multer({ storage: multer.memoryStorage() });
+// Placeholder for future file upload functionality
 
 // Helper functions
 const calculateWorkHours = (entries, lunchHours = 0.5) => {
