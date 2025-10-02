@@ -220,108 +220,11 @@ pct exec "$CONTAINER_ID" -- bash -c "
     nginx -t && systemctl reload nginx
 "
 
-# Konfigurera Grafana med databaskoppling
-log "Konfigurerar Grafana datasource..."
-pct exec "$CONTAINER_ID" -- bash -c "mkdir -p /etc/grafana/provisioning/datasources"
-pct exec "$CONTAINER_ID" -- bash -c "cat > /etc/grafana/provisioning/datasources/postgresql.yaml << 'EOF'
-apiVersion: 1
-
-datasources:
-  - name: Daily Log PostgreSQL
-    type: postgres
-    access: proxy
-    url: localhost:5432
-    database: daily_log
-    user: dailylog
-    secureJsonData:
-      password: dailylog123
-    jsonData:
-      sslmode: disable
-      postgresVersion: 1400
-      timescaledb: false
-    editable: true
-    isDefault: true
-EOF"
-
-log "Konfigurerar Grafana dashboards..."
-pct exec "$CONTAINER_ID" -- bash -c "mkdir -p /etc/grafana/provisioning/dashboards"
-pct exec "$CONTAINER_ID" -- bash -c "cat > /etc/grafana/provisioning/dashboards/daily-log.yaml << 'EOF'
-apiVersion: 1
-
-providers:
-  - name: 'Daily Log Dashboards'
-    orgId: 1
-    folder: ''
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 10
-    allowUiUpdates: true
-    options:
-      path: /var/lib/grafana/dashboards
-EOF"
-
-pct exec "$CONTAINER_ID" -- bash -c "mkdir -p /var/lib/grafana/dashboards"
-pct exec "$CONTAINER_ID" -- bash -c "cat > /var/lib/grafana/dashboards/overview.json << 'EOF'
-{
-  \"dashboard\": {
-    \"title\": \"Daily Log Overview\",
-    \"tags\": [\"daily-log\"],
-    \"timezone\": \"browser\",
-    \"panels\": [
-      {
-        \"id\": 1,
-        \"title\": \"Totala timmar senaste 7 dagarna\",
-        \"type\": \"timeseries\",
-        \"gridPos\": {\"h\": 8, \"w\": 12, \"x\": 0, \"y\": 0},
-        \"targets\": [
-          {
-            \"rawSql\": \"SELECT entry_date as time, SUM(duration_minutes)/60.0 as hours FROM log_entries WHERE entry_date >= CURRENT_DATE - INTERVAL '7 days' GROUP BY entry_date ORDER BY entry_date\",
-            \"format\": \"time_series\"
-          }
-        ]
-      },
-      {
-        \"id\": 2,
-        \"title\": \"Aktiviteter per dag\",
-        \"type\": \"barchart\",
-        \"gridPos\": {\"h\": 8, \"w\": 12, \"x\": 12, \"y\": 0},
-        \"targets\": [
-          {
-            \"rawSql\": \"SELECT entry_date as time, COUNT(*) as count FROM log_entries WHERE entry_date >= CURRENT_DATE - INTERVAL '7 days' GROUP BY entry_date ORDER BY entry_date\",
-            \"format\": \"time_series\"
-          }
-        ]
-      },
-      {
-        \"id\": 3,
-        \"title\": \"Senaste aktiviteter\",
-        \"type\": \"table\",
-        \"gridPos\": {\"h\": 8, \"w\": 24, \"x\": 0, \"y\": 8},
-        \"targets\": [
-          {
-            \"rawSql\": \"SELECT entry_date, start_time, end_time, description, duration_minutes FROM log_entries ORDER BY entry_date DESC, start_time DESC LIMIT 10\",
-            \"format\": \"table\"
-          }
-        ]
-      }
-    ],
-    \"time\": {
-      \"from\": \"now-7d\",
-      \"to\": \"now\"
-    },
-    \"schemaVersion\": 16,
-    \"version\": 0
-  }
-}
-EOF"
-
-pct exec "$CONTAINER_ID" -- bash -c "chown -R grafana:grafana /var/lib/grafana/dashboards"
-
 # Starta Grafana
 log "Startar Grafana..."
 pct exec "$CONTAINER_ID" -- bash -c "systemctl enable grafana-server && systemctl start grafana-server"
 
-sleep 8
+sleep 5
 CONTAINER_IP=$(pct exec "$CONTAINER_ID" -- hostname -I | awk '{print $1}')
 
 # Slutrapport
