@@ -42,7 +42,7 @@ check_root() {
 
 check_proxmox() {
     if ! command -v pct &> /dev/null; then
-        log_error "Proxmox (pct) hittades inte. Kör detta script på en Proxmox-värd."
+        log_error "Proxmox (pct) hittades inte."
         exit 1
     fi
 }
@@ -71,27 +71,10 @@ download_template() {
     fi
     
     log_info "Laddar ner Ubuntu 22.04 LXC template..."
-    log_warn "Detta kan ta några minuter..."
-    
     pveam update
+    pveam download local "$TEMPLATE"
     
-    if ! pveam download local "$TEMPLATE" 2>/dev/null; then
-        log_error "Kunde inte ladda ner template: $TEMPLATE"
-        log_info "Försöker hitta alternativ template..."
-        
-        local available=$(pveam available 2>/dev/null | grep ubuntu | grep -E '22\.04|20\.04' | head -1 | awk '{print $2}')
-        
-        if [ -n "$available" ]; then
-            log_info "Använder alternativ template: $available"
-            TEMPLATE="$available"
-            pveam download local "$TEMPLATE"
-        else
-            log_error "Ingen lämplig Ubuntu template hittades"
-            exit 1
-        fi
-    fi
-    
-    log_info "✓ Template nedladdad: $TEMPLATE"
+    log_info "✓ Template nedladdad"
 }
 
 main() {
@@ -113,109 +96,71 @@ main() {
     pct create $CONTAINER_ID local:vztmpl/$TEMPLATE \
         --hostname $CONTAINER_NAME \
         --memory $MEMORY \
+        --cores 2 \
         --net0 name=eth0,bridge=$NETWORK,ip=dhcp \
-        --storage $STORAGE \
         --rootfs $STORAGE:$DISK_SIZE \
         --features nesting=1 \
         --unprivileged 1 \
         --onboot 1
     
-    log_info "✓ Container skapad med ID: $CONTAINER_ID"
+    log_info "✓ Container skapad"
     
     log_info "Startar container..."
     pct start $CONTAINER_ID
     sleep 10
     
-    log_info "Installerar grundläggande paket..."
-    pct exec $CONTAINER_ID -- bash -c "apt update && apt upgrade -y"
-    pct exec $CONTAINER_ID -- bash -c "apt install -y curl wget git nano sudo"
+    log_info "Installerar paket..."
+    pct exec $CONTAINER_ID -- bash -c "apt update && apt upgrade -y && apt install -y curl wget git nano sudo postgresql postgresql-contrib nginx software-properties-common apt-transport-https"
     
-    log_info "Installerar PostgreSQL..."
-    pct exec $CONTAINER_ID -- bash -c "apt install -y postgresql postgresql-contrib"
-    
-    log_info "Installerar Node.js 18..."
-    pct exec $CONTAINER_ID -- bash -c "curl -fsSL https://deb.nodesource.com/setup_18.x | bash -"
-    pct exec $CONTAINER_ID -- bash -c "apt install -y nodejs"
+    log_info "Installerar Node.js..."
+    pct exec $CONTAINER_ID -- bash -c "curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt install -y nodejs"
     pct exec $CONTAINER_ID -- bash -c "npm install -g pm2"
     
-    log_info "Installerar Nginx..."
-    pct exec $CONTAINER_ID -- bash -c "apt install -y nginx"
-    
     log_info "Installerar Grafana..."
-    pct exec $CONTAINER_ID -- bash -c "apt install -y software-properties-common apt-transport-https"
-    pct exec $CONTAINER_ID -- bash -c "mkdir -p /etc/apt/keyrings/"
-    pct exec $CONTAINER_ID -- bash -c "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /etc/apt/keyrings/grafana.gpg"
-    pct exec $CONTAINER_ID -- bash -c "echo 'deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main' | tee /etc/apt/sources.list.d/grafana.list"
+    pct exec $CONTAINER_ID -- bash -c "mkdir -p /etc/apt/keyrings/ && wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /etc/apt/keyrings/grafana.gpg"
+    pct exec $CONTAINER_ID -- bash -c "echo 'deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main' > /etc/apt/sources.list.d/grafana.list"
     pct exec $CONTAINER_ID -- bash -c "apt update && apt install -y grafana"
     
-    log_info "Klonar repository från GitHub..."
+    log_info "Klonar repository..."
     pct exec $CONTAINER_ID -- bash -c "cd /opt && git clone $REPO_URL"
     
-    log_info "Konfigurerar PostgreSQL databas..."
+    log_info "Konfigurerar databas..."
     pct exec $CONTAINER_ID -- bash -c "sudo -u postgres psql -c \"CREATE DATABASE daily_log;\""
     pct exec $CONTAINER_ID -- bash -c "sudo -u postgres psql -c \"CREATE USER dailylog WITH PASSWORD 'dailylog123';\""
     pct exec $CONTAINER_ID -- bash -c "sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE daily_log TO dailylog;\""
-    pct exec $CONTAINER_ID -- bash -c "sudo -u postgres psql -c \"ALTER DATABASE daily_log OWNER TO dailylog;\""
+    pct exec $CONTAINER_ID -- bash -c "sudo -u postgres psql -d daily_log -c \"GRANT ALL ON SCHEMA public TO dailylog;\""
     
-    log_info "Installerar backend dependencies..."
-    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && npm install"
-    
-    log_info "Konfigurerar backend..."
-    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && cp .env.example .env"
-    
-    log_info "Skapar database schema manuellt (fallback)..."
+    log_info "Säkerställer schema.sql finns..."
     pct exec $CONTAINER_ID -- bash -c "mkdir -p /opt/daily-log-system/database"
     pct exec $CONTAINER_ID -- bash -c "curl -s https://raw.githubusercontent.com/yxkastarn/daily-log-system/main/database/schema.sql -o /opt/daily-log-system/database/schema.sql"
     
-    log_info "Kör databas-migrationer..."
+    log_info "Installerar backend..."
+    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && npm install"
+    pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && cp .env.example .env"
     pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && npm run migrate"
     
-    log_info "Startar backend API..."
+    log_info "Startar backend..."
     pct exec $CONTAINER_ID -- bash -c "cd /opt/daily-log-system/backend && pm2 start server.js --name daily-log-api"
-    pct exec $CONTAINER_ID -- bash -c "pm2 startup systemd -u root --hp /root"
-    pct exec $CONTAINER_ID -- bash -c "pm2 save"
+    pct exec $CONTAINER_ID -- bash -c "pm2 startup systemd -u root --hp /root && pm2 save"
     
     log_info "Konfigurerar Nginx..."
     pct exec $CONTAINER_ID -- bash -c "cp /opt/daily-log-system/nginx.conf /etc/nginx/sites-available/daily-log"
-    pct exec $CONTAINER_ID -- bash -c "ln -sf /etc/nginx/sites-available/daily-log /etc/nginx/sites-enabled/"
-    pct exec $CONTAINER_ID -- bash -c "rm -f /etc/nginx/sites-enabled/default"
+    pct exec $CONTAINER_ID -- bash -c "ln -sf /etc/nginx/sites-available/daily-log /etc/nginx/sites-enabled/ && rm -f /etc/nginx/sites-enabled/default"
     pct exec $CONTAINER_ID -- bash -c "nginx -t && systemctl reload nginx"
     
-    log_info "Konfigurerar Grafana..."
-    pct exec $CONTAINER_ID -- bash -c "systemctl enable grafana-server"
-    pct exec $CONTAINER_ID -- bash -c "systemctl start grafana-server"
+    log_info "Startar Grafana..."
+    pct exec $CONTAINER_ID -- bash -c "systemctl enable grafana-server && systemctl start grafana-server"
     
-    log_info "Väntar på att Grafana startar..."
-    sleep 15
-    
-    log_info "Importerar Grafana dashboards..."
-    pct exec $CONTAINER_ID -- bash -c "bash /opt/daily-log-system/scripts/setup-grafana.sh" || log_warn "Grafana setup misslyckades, konfigurera manuellt"
-    
-    log_info "Konfigurerar automatisk backup..."
-    pct exec $CONTAINER_ID -- bash -c "chmod +x /opt/daily-log-system/scripts/backup.sh"
-    pct exec $CONTAINER_ID -- bash -c "(crontab -l 2>/dev/null; echo '0 2 * * * /opt/daily-log-system/scripts/backup.sh') | crontab -"
-    
-    sleep 5
+    sleep 10
     CONTAINER_IP=$(pct exec $CONTAINER_ID -- hostname -I | awk '{print $1}')
     
     echo ""
-    echo -e "${GREEN}"
-    echo "╔════════════════════════════════════════════════════════════╗"
+    echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗"
     echo "║              Installation Slutförd! 🎉                     ║"
-    echo "╚════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    echo "╚════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${BLUE}Container Information:${NC}"
-    echo -e "  ID: ${GREEN}${CONTAINER_ID}${NC}"
-    echo -e "  IP: ${GREEN}${CONTAINER_IP}${NC}"
-    echo ""
-    echo -e "${BLUE}Åtkomst:${NC}"
     echo -e "  ${GREEN}✓${NC} Webbgränssnitt: ${YELLOW}http://${CONTAINER_IP}${NC}"
-    echo -e "  ${GREEN}✓${NC} Grafana:        ${YELLOW}http://${CONTAINER_IP}:3000${NC}"
-    echo -e "      - Användarnamn: ${YELLOW}admin${NC}"
-    echo -e "      - Lösenord:     ${YELLOW}admin${NC} ${RED}(ändra vid första inloggningen!)${NC}"
-    echo ""
-    echo -e "${GREEN}Lycka till med Daily Log System! 🚀${NC}"
+    echo -e "  ${GREEN}✓${NC} Grafana: ${YELLOW}http://${CONTAINER_IP}:3000${NC} (admin/admin)"
     echo ""
 }
 
