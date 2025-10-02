@@ -17,11 +17,11 @@ Systemet är byggt från grunden för att ersätta manuella Excel-baserade loggb
 Kör följande kommando i Proxmox CLI:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/yxkastarn/daily-log-system/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/yxkastarn/daily-log-system/main/install.sh) 108
 ```
 
 Scriptet kommer att:
-1. Skapa en ny LXC-container (Ubuntu 22.04)
+1. Skapa en ny LXC-container (Ubuntu 22.04) med ID 108
 2. Installera alla beroenden (PostgreSQL, Node.js, Grafana, Nginx)
 3. Konfigurera databasen och importera befintlig data
 4. Starta alla tjänster
