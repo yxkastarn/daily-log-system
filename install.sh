@@ -149,7 +149,15 @@ pct exec $CONTAINER_ID -- bash -c '
     # Säkerställ att PM2 är tillgängligt i PATH
     export PATH="$PATH:/usr/local/bin:/usr/bin"
     
+    # Säkerställ att PM2 är korrekt installerat
+    if ! command -v pm2 &> /dev/null; then
+        echo "Reinstalling PM2..."
+        npm install -g pm2
+        ln -sf "$(which pm2)" /usr/bin/pm2
+    fi
+
     # Starta backend med PM2
+    pm2 delete daily-log-api 2>/dev/null || true  # Remove if exists
     pm2 start server.js --name daily-log-api || {
         echo "Failed to start with pm2. Checking pm2 installation..."
         which pm2
@@ -157,11 +165,16 @@ pct exec $CONTAINER_ID -- bash -c '
         exit 1
     }
     
-    # Spara PM2 konfiguration
-    pm2 save || echo "Warning: Could not save PM2 configuration"
+    # Säkerställ att PM2 är konfigurerat för automatisk start
+    pm2 startup systemd -u root --hp /root
     
-    # Konfigurera PM2 att starta vid systemstart
-    pm2 startup || echo "Warning: Could not setup PM2 startup script"
+    # Spara PM2 konfiguration efter att processen har startats
+    pm2 save --force
+    
+    # Aktivera och starta pm2-root service
+    systemctl daemon-reload
+    systemctl enable pm2-root
+    systemctl start pm2-root
 '
 
 # Konfigurera Grafana
