@@ -79,6 +79,13 @@ pct exec $CONTAINER_ID -- bash -c '
     # Installera grundläggande paket
     apt-get install -y curl git postgresql postgresql-contrib nginx
 
+    # Lägg till Grafana repository och installera Grafana
+    apt-get install -y apt-transport-https software-properties-common
+    wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+    echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
+    apt-get update
+    apt-get install -y grafana
+
     # Installera Node.js 18
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
     apt-get install -y nodejs
@@ -160,9 +167,23 @@ pct exec $CONTAINER_ID -- bash -c '
 # Konfigurera Grafana
 log "Konfigurerar Grafana..."
 pct exec $CONTAINER_ID -- bash -c '
+    # Säkerställ att Grafana är installerad
+    if ! command -v grafana-server &> /dev/null; then
+        echo "Error: Grafana is not installed"
+        exit 1
+    fi
+
+    # Skapa Grafana kataloger om de inte finns
+    mkdir -p /var/lib/grafana
+    mkdir -p /etc/grafana/provisioning
+
     # Säkerställ att Grafana-katalogerna har rätt behörigheter
-    chown -R grafana:grafana /var/lib/grafana
-    chown -R grafana:grafana /etc/grafana
+    if getent group grafana >/dev/null; then
+        chown -R grafana:grafana /var/lib/grafana
+        chown -R grafana:grafana /etc/grafana
+    else
+        echo "Warning: grafana user/group not found, skipping ownership change"
+    fi
 
     # Uppdatera Grafana konfiguration
     cat > /etc/grafana/grafana.ini << EOF
@@ -186,9 +207,15 @@ enabled = true
 provisioning = /etc/grafana/provisioning
 EOF
 
-    # Starta om Grafana
-    systemctl restart grafana-server
-    systemctl status grafana-server
+    # Enable and start Grafana
+    systemctl enable grafana-server
+    systemctl start grafana-server
+    
+    # Vänta på att Grafana ska starta
+    sleep 5
+    
+    # Kontrollera status
+    systemctl status grafana-server || echo "Warning: Grafana service status check failed"
 '
 
 log "Konfigurerar nginx..."
