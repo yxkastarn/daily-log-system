@@ -212,7 +212,7 @@ http_addr = 0.0.0.0
 http_port = 3000
 domain = ${CONTAINER_IP}
 serve_from_sub_path = true
-root_url = %(protocol)s://%(domain)s/grafana/
+root_url = %(protocol)s://%(domain)s:%(http_port)s/
 
 [security]
 allow_embedding = true
