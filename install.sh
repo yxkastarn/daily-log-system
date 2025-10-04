@@ -159,10 +159,25 @@ pct exec $CONTAINER_ID -- bash -c '
 
 log "Konfigurerar nginx..."
 pct exec $CONTAINER_ID -- bash -c '
-    rm /etc/nginx/sites-enabled/default
+    # Ta bort default konfiguration
+    rm -f /etc/nginx/sites-enabled/default
+
+    # Kopiera och rensa upp nginx konfigurationen
     cp /opt/daily-log-system/nginx.conf /etc/nginx/sites-available/daily-log
-    ln -s /etc/nginx/sites-available/daily-log /etc/nginx/sites-enabled/
-    nginx -t && systemctl restart nginx
+    
+    # Ta bort eventuella gamla symlinks
+    rm -f /etc/nginx/sites-enabled/daily-log
+    
+    # Skapa ny symlink
+    ln -sf /etc/nginx/sites-available/daily-log /etc/nginx/sites-enabled/
+    
+    # Verifiera och starta om nginx
+    if nginx -t; then
+        systemctl restart nginx
+    else
+        echo "Nginx configuration test failed"
+        exit 1
+    fi
 '
 
 IP=$(pct exec $CONTAINER_ID -- bash -c "ip addr show eth0 | grep 'inet ' | awk '{print \$2}' | cut -d/ -f1")
