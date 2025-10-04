@@ -33,22 +33,30 @@ if pct status $CONTAINER_ID &>/dev/null; then
     error "Container $CONTAINER_ID existerar redan"
 fi
 
+# Kontrollera om pveam är tillgängligt
+if ! command -v pveam &> /dev/null; then
+    error "pveam command not found. Are you running this on a Proxmox VE host?"
+fi
+
 # Kontrollera och ladda ner template om den inte finns
 log "Kontrollerar om Ubuntu template finns..."
+if ! pveam available | grep -q "$TEMPLATE"; then
+    log "Uppdaterar template-listan..."
+    pveam update || error "Kunde inte uppdatera template-listan"
+fi
+
 if ! pveam list local | grep -q "$TEMPLATE"; then
     log "Template saknas, laddar ner..."
-    pveam update || error "Kunde inte uppdatera template-listan"
     pveam download local "$TEMPLATE" || error "Kunde inte ladda ner template"
-    
-    # Dubbelkolla att nedladdningen lyckades
-    if ! pveam list local | grep -q "$TEMPLATE"; then
-        error "Template nedladdning misslyckades"
-    fi
-    log "Template nedladdad framgångsrikt"
+fi
+
+# Dubbelkolla att templaten finns tillgänglig
+if ! [ -f "/var/lib/vz/template/cache/$TEMPLATE" ]; then
+    error "Template hittades inte i cache efter nedladdning"
 fi
 
 log "Skapar LXC container..."
-pct create $CONTAINER_ID "local:vztmpl/$TEMPLATE" \
+pct create $CONTAINER_ID "/var/lib/vz/template/cache/$TEMPLATE" \
     --hostname $CONTAINER_NAME \
     --memory $MEMORY \
     --rootfs $STORAGE:$DISK_SIZE \
