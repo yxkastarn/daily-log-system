@@ -228,7 +228,7 @@ EOF
     sleep 5
     
     # Kontrollera status
-    systemctl status grafana-server || echo "Warning: Grafana service status check failed"
+   # systemctl status grafana-server || echo "Warning: Grafana service status check failed"
 '
 
 log "Konfigurerar nginx..."
