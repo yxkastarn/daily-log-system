@@ -178,6 +178,9 @@ pct exec $CONTAINER_ID -- bash -c '
 '
 
 # Konfigurera Grafana
+
+
+
 log "Konfigurerar Grafana..."
 pct exec $CONTAINER_ID -- bash -c '
     # Säkerställ att Grafana är installerad
@@ -229,7 +232,14 @@ EOF
     
     # Kontrollera status
     # systemctl status grafana-server || echo "Warning: Grafana service status check failed"
-    systemctl is-active grafana-server || echo "Warning: Grafana service is not active"
+    # systemctl is-active grafana-server || echo "Warning: Grafana service is not active"
+    # Kontrollera status
+    if systemctl is-active --quiet grafana-server; then
+        echo "Grafana startade framgångsrikt"
+    else
+        echo "Warning: Grafana service is not active"
+        systemctl status grafana-server --no-pager --lines=10
+    fi
 '
 
 log "Konfigurerar nginx..."
