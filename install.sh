@@ -157,6 +157,40 @@ pct exec $CONTAINER_ID -- bash -c '
     pm2 startup || echo "Warning: Could not setup PM2 startup script"
 '
 
+# Konfigurera Grafana
+log "Konfigurerar Grafana..."
+pct exec $CONTAINER_ID -- bash -c '
+    # Säkerställ att Grafana-katalogerna har rätt behörigheter
+    chown -R grafana:grafana /var/lib/grafana
+    chown -R grafana:grafana /etc/grafana
+
+    # Uppdatera Grafana konfiguration
+    cat > /etc/grafana/grafana.ini << EOF
+[server]
+protocol = http
+http_addr = 0.0.0.0
+http_port = 3000
+domain = localhost
+serve_from_sub_path = true
+root_url = %(protocol)s://%(domain)s/grafana/
+
+[security]
+allow_embedding = true
+cookie_secure = false
+cookie_samesite = disabled
+
+[auth.anonymous]
+enabled = true
+
+[paths]
+provisioning = /etc/grafana/provisioning
+EOF
+
+    # Starta om Grafana
+    systemctl restart grafana-server
+    systemctl status grafana-server
+'
+
 log "Konfigurerar nginx..."
 pct exec $CONTAINER_ID -- bash -c '
     # Ta bort default konfiguration
