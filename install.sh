@@ -73,9 +73,24 @@ sleep 5
 
 log "Installerar systempaket..."
 pct exec $CONTAINER_ID -- bash -c '
+    # Uppdatera paketlistan
     apt-get update
-    apt-get install -y curl git nodejs npm postgresql postgresql-contrib nginx
+
+    # Installera grundläggande paket
+    apt-get install -y curl git postgresql postgresql-contrib nginx
+
+    # Installera Node.js 18
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    apt-get install -y nodejs
+
+    # Verifiera Node.js version
+    node --version
+    npm --version
+
+    # Installera PM2 globalt och verifiera installationen
     npm install -g pm2
+    ln -s "$(which pm2)" /usr/bin/pm2
+    pm2 --version
 '
 
 log "Konfigurerar locale..."
@@ -113,15 +128,33 @@ pct exec $CONTAINER_ID -- bash -c '
 log "Sätter upp backend..."
 pct exec $CONTAINER_ID -- bash -c '
     cd /opt/daily-log-system/backend
+    
+    # Rensa npm cache och node_modules för att säkerställa ren installation
+    rm -rf node_modules package-lock.json
+    npm cache clean --force
+    
+    # Installera dependencies
     npm install
     
     # Kör databasmigrering
     node migrations/run-migrations.js
     
+    # Säkerställ att PM2 är tillgängligt i PATH
+    export PATH="$PATH:/usr/local/bin:/usr/bin"
+    
     # Starta backend med PM2
-    pm2 start server.js --name daily-log-api
-    pm2 save
-    pm2 startup
+    pm2 start server.js --name daily-log-api || {
+        echo "Failed to start with pm2. Checking pm2 installation..."
+        which pm2
+        pm2 --version
+        exit 1
+    }
+    
+    # Spara PM2 konfiguration
+    pm2 save || echo "Warning: Could not save PM2 configuration"
+    
+    # Konfigurera PM2 att starta vid systemstart
+    pm2 startup || echo "Warning: Could not setup PM2 startup script"
 '
 
 log "Konfigurerar nginx..."
