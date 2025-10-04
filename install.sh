@@ -201,13 +201,16 @@ pct exec $CONTAINER_ID -- bash -c '
         echo "Warning: grafana user/group not found, skipping ownership change"
     fi
 
+    # Hämta container IP
+    CONTAINER_IP=$(ip addr show eth0 | grep "inet " | awk "{print \$2}" | cut -d/ -f1)
+
     # Uppdatera Grafana konfiguration
     cat > /etc/grafana/grafana.ini << EOF
 [server]
 protocol = http
 http_addr = 0.0.0.0
 http_port = 3000
-domain = localhost
+domain = ${CONTAINER_IP}
 serve_from_sub_path = true
 root_url = %(protocol)s://%(domain)s/grafana/
 
@@ -223,16 +226,16 @@ enabled = true
 provisioning = /etc/grafana/provisioning
 EOF
 
+    # Sätt miljövariabel för att inaktivera pager
+    export SYSTEMD_PAGER=cat
+    
     # Enable and start Grafana
-    systemctl enable grafana-server
-    systemctl start grafana-server
+    systemctl enable grafana-server --no-pager
+    systemctl start grafana-server --no-pager
     
     # Vänta på att Grafana ska starta
     sleep 5
     
-    # Kontrollera status
-    # systemctl status grafana-server || echo "Warning: Grafana service status check failed"
-    # systemctl is-active grafana-server || echo "Warning: Grafana service is not active"
     # Kontrollera status
     if systemctl is-active --quiet grafana-server; then
         echo "Grafana startade framgångsrikt"
